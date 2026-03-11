@@ -1,0 +1,703 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>AI秘書 - タスク管理</title>
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="theme-color" content="#ffffff">
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Hiragino Sans', sans-serif; background: #fafafa; color: #1a1a1a; line-height: 1.5; -webkit-font-smoothing: antialiased; }
+
+/* Header */
+.header { background: #fff; border-bottom: 1px solid #e5e5e5; padding: 12px 16px; position: sticky; top: 0; z-index: 100; }
+.header-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+.header h1 { font-size: 18px; font-weight: 600; }
+.header-date { font-size: 12px; color: #888; }
+.tab-bar { display: flex; gap: 2px; background: #f0f0f0; border-radius: 8px; padding: 2px; }
+.tab { padding: 7px 0; border-radius: 6px; font-size: 13px; cursor: pointer; border: none; background: transparent; color: #666; font-weight: 500; transition: all 0.2s; flex: 1; text-align: center; }
+.tab.active { background: #fff; color: #1a1a1a; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+
+/* Main Layout */
+.container { max-width: 1200px; margin: 0 auto; padding: 12px; padding-bottom: 80px; }
+
+/* Stats Bar */
+.stats-bar { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-bottom: 12px; }
+.stat { background: #fff; border: 1px solid #e5e5e5; border-radius: 10px; padding: 10px 8px; text-align: center; }
+.stat-number { font-size: 22px; font-weight: 700; }
+.stat-label { font-size: 10px; color: #888; margin-top: 2px; }
+.stat.q1-stat .stat-number { color: #ef4444; }
+.stat.q2-stat .stat-number { color: #3b82f6; }
+.stat.overdue-stat .stat-number { color: #f97316; }
+.stat.today-stat .stat-number { color: #8b5cf6; }
+
+/* Deadline Banner */
+.deadline-banner { background: #fff; border: 1px solid #e5e5e5; border-radius: 10px; padding: 12px 16px; margin-bottom: 12px; }
+.deadline-section { margin-bottom: 8px; }
+.deadline-section:last-child { margin-bottom: 0; }
+.deadline-label { font-size: 11px; font-weight: 600; display: inline-flex; align-items: center; gap: 4px; padding: 2px 8px; border-radius: 4px; margin-bottom: 6px; }
+.deadline-label.overdue { background: #fef2f2; color: #ef4444; }
+.deadline-label.today { background: #faf5ff; color: #8b5cf6; }
+.deadline-label.tomorrow { background: #fffbeb; color: #f59e0b; }
+.deadline-label.week { background: #eff6ff; color: #3b82f6; }
+.deadline-tasks { padding-left: 4px; }
+.deadline-task { font-size: 13px; padding: 4px 0; display: flex; align-items: center; gap: 8px; }
+.deadline-task .q-dot { width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0; }
+.deadline-task .q-dot.q1 { background: #ef4444; }
+.deadline-task .q-dot.q2 { background: #3b82f6; }
+.deadline-task .q-dot.q3 { background: #f59e0b; }
+.deadline-task .q-dot.q4 { background: #9ca3af; }
+.deadline-task .due-text { color: #888; font-size: 11px; margin-left: auto; flex-shrink: 0; }
+
+/* Matrix View */
+.matrix { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.quadrant { background: #fff; border-radius: 12px; padding: 12px; min-height: 140px; border: 1px solid #e5e5e5; transition: box-shadow 0.2s; }
+.quadrant:hover { box-shadow: 0 2px 8px rgba(0,0,0,0.06); }
+.quadrant-header { display: flex; align-items: center; gap: 6px; margin-bottom: 10px; padding-bottom: 8px; border-bottom: 2px solid; }
+.q1 .quadrant-header { border-color: #ef4444; }
+.q2 .quadrant-header { border-color: #3b82f6; }
+.q3 .quadrant-header { border-color: #f59e0b; }
+.q4 .quadrant-header { border-color: #9ca3af; }
+.quadrant-title { font-size: 12px; font-weight: 600; }
+.quadrant-subtitle { font-size: 10px; color: #888; }
+.q1 .quadrant-title { color: #ef4444; }
+.q2 .quadrant-title { color: #3b82f6; }
+.q3 .quadrant-title { color: #f59e0b; }
+.q4 .quadrant-title { color: #9ca3af; }
+
+/* Task Items */
+.task-item { display: flex; align-items: flex-start; gap: 8px; padding: 8px 0; border-bottom: 1px solid #f5f5f5; }
+.task-item:last-child { border-bottom: none; }
+.task-check { width: 20px; height: 20px; border-radius: 50%; border: 2px solid #ccc; cursor: pointer; flex-shrink: 0; margin-top: 1px; transition: all 0.2s; display: flex; align-items: center; justify-content: center; }
+.task-check:hover { border-color: #3b82f6; }
+.task-check.done { background: #3b82f6; border-color: #3b82f6; }
+.task-check.done::after { content: '\2713'; color: #fff; font-size: 12px; }
+.task-content { flex: 1; min-width: 0; }
+.task-title { font-size: 13px; word-break: break-word; }
+.task-title.done { text-decoration: line-through; color: #aaa; }
+.task-meta { font-size: 11px; color: #999; margin-top: 2px; display: flex; align-items: center; gap: 4px; flex-wrap: wrap; }
+.due-badge { display: inline-flex; align-items: center; gap: 2px; padding: 1px 6px; border-radius: 4px; font-size: 10px; font-weight: 500; }
+.due-badge.overdue { background: #fef2f2; color: #ef4444; }
+.due-badge.today { background: #faf5ff; color: #8b5cf6; }
+.due-badge.tomorrow { background: #fffbeb; color: #f59e0b; }
+.due-badge.thisweek { background: #eff6ff; color: #3b82f6; }
+.due-badge.later { background: #f5f5f5; color: #888; }
+.task-delete { background: none; border: none; color: #ccc; cursor: pointer; font-size: 18px; padding: 0 4px; transition: color 0.2s; line-height: 1; }
+.task-delete:hover { color: #ef4444; }
+.empty-state { text-align: center; padding: 20px; color: #ccc; font-size: 13px; }
+
+/* Calendar View */
+.calendar-section { margin-top: 0; }
+.calendar-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+.calendar-nav { display: flex; gap: 8px; align-items: center; }
+.calendar-nav button { background: #fff; border: 1px solid #e5e5e5; border-radius: 6px; padding: 6px 14px; cursor: pointer; font-size: 14px; }
+.calendar-nav button:hover { background: #f5f5f5; }
+.calendar-month { font-size: 16px; font-weight: 600; min-width: 140px; text-align: center; }
+.calendar-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 1px; background: #e5e5e5; border-radius: 8px; overflow: hidden; }
+.calendar-dow { background: #f8f8f8; text-align: center; font-size: 11px; font-weight: 600; color: #888; padding: 8px 2px; }
+.calendar-dow.sun { color: #ef4444; }
+.calendar-dow.sat { color: #3b82f6; }
+.calendar-day { background: #fff; height: 52px; padding: 2px; cursor: pointer; transition: background 0.2s; overflow: hidden; display: flex; flex-direction: column; align-items: center; }
+.calendar-day:hover { background: #f8f8f8; }
+.calendar-day.other-month { background: #fafafa; color: #ccc; }
+.calendar-day.today { background: #eff6ff; }
+.day-number { font-size: 11px; font-weight: 500; padding: 2px 4px; text-align: center; }
+.day-number.today { background: #3b82f6; color: #fff; border-radius: 50%; width: 22px; height: 22px; display: flex; align-items: center; justify-content: center; }
+.day-number.sun { color: #ef4444; }
+.day-number.sat { color: #3b82f6; }
+.day-dots { display: flex; gap: 3px; flex-wrap: wrap; justify-content: center; margin-top: 4px; }
+.day-dot { width: 6px; height: 6px; border-radius: 50%; }
+.day-dot.q1 { background: #ef4444; }
+.day-dot.q2 { background: #3b82f6; }
+.day-dot.q3 { background: #f59e0b; }
+.day-dot.q4 { background: #9ca3af; }
+.day-count { font-size: 9px; color: #888; margin-top: 1px; }
+
+/* List View */
+.list-view { background: #fff; border-radius: 12px; border: 1px solid #e5e5e5; overflow: hidden; }
+.list-section-header { padding: 8px 16px; background: #f8f8f8; font-size: 12px; font-weight: 600; color: #666; }
+.list-task { display: flex; align-items: center; gap: 10px; padding: 12px 16px; border-bottom: 1px solid #f0f0f0; }
+.list-task:last-child { border-bottom: none; }
+.list-q-badge { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+.list-q-badge.q1 { background: #ef4444; }
+.list-q-badge.q2 { background: #3b82f6; }
+.list-q-badge.q3 { background: #f59e0b; }
+.list-q-badge.q4 { background: #9ca3af; }
+
+/* Day Detail Popup */
+.day-detail-overlay { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.3); z-index: 250; align-items: flex-end; justify-content: center; }
+.day-detail-overlay.open { display: flex; }
+.day-detail { background: #fff; border-radius: 20px 20px 0 0; padding: 20px 20px 32px; width: 100%; max-width: 480px; box-shadow: 0 -10px 40px rgba(0,0,0,0.15); max-height: 60vh; overflow-y: auto; }
+.day-detail-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+.day-detail-title { font-size: 15px; font-weight: 600; }
+.day-detail-close { background: none; border: none; font-size: 22px; color: #999; cursor: pointer; padding: 0 4px; }
+.day-detail-empty { text-align: center; padding: 20px; color: #aaa; font-size: 13px; }
+
+@media (min-width: 768px) {
+  .day-detail-overlay { align-items: center; }
+  .day-detail { border-radius: 16px; }
+}
+
+/* Add Task Modal */
+.modal-overlay { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.3); z-index: 200; align-items: flex-end; justify-content: center; }
+.modal-overlay.open { display: flex; }
+.modal { background: #fff; border-radius: 20px 20px 0 0; padding: 20px 20px 32px; width: 100%; max-width: 480px; box-shadow: 0 -10px 40px rgba(0,0,0,0.15); max-height: 90vh; overflow-y: auto; }
+.modal-handle { width: 36px; height: 4px; background: #ddd; border-radius: 2px; margin: 0 auto 16px; }
+.modal h2 { font-size: 16px; margin-bottom: 16px; }
+.form-group { margin-bottom: 14px; }
+.form-group label { display: block; font-size: 12px; font-weight: 500; color: #666; margin-bottom: 4px; }
+.form-group input, .form-group select, .form-group textarea { width: 100%; padding: 10px 12px; border: 1px solid #e5e5e5; border-radius: 10px; font-size: 16px; font-family: inherit; -webkit-appearance: none; }
+.form-group textarea { resize: vertical; height: 60px; }
+.form-group input:focus, .form-group select:focus, .form-group textarea:focus { outline: none; border-color: #3b82f6; }
+.quadrant-select { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.q-option { padding: 12px 8px; border: 2px solid #e5e5e5; border-radius: 10px; cursor: pointer; text-align: center; font-size: 12px; transition: all 0.2s; }
+.q-option:hover { border-color: #ccc; }
+.q-option.selected { border-color: #3b82f6; background: #eff6ff; }
+.q-option .q-label { font-weight: 700; font-size: 14px; }
+.q-option .q-desc { color: #888; margin-top: 2px; font-size: 11px; }
+.modal-actions { display: flex; gap: 8px; margin-top: 16px; }
+.btn { padding: 12px 20px; border-radius: 10px; font-size: 14px; font-weight: 500; cursor: pointer; border: none; transition: all 0.2s; flex: 1; text-align: center; }
+.btn-primary { background: #3b82f6; color: #fff; }
+.btn-primary:hover { background: #2563eb; }
+.btn-secondary { background: #f5f5f5; color: #666; }
+.btn-secondary:hover { background: #eee; }
+
+/* FAB */
+.fab { position: fixed; bottom: 24px; right: 20px; width: 56px; height: 56px; border-radius: 50%; background: #3b82f6; color: #fff; font-size: 28px; border: none; cursor: pointer; box-shadow: 0 4px 14px rgba(59,130,246,0.4); transition: all 0.2s; z-index: 50; display: flex; align-items: center; justify-content: center; }
+.fab:hover { transform: scale(1.05); }
+.fab:active { transform: scale(0.95); }
+
+/* Desktop */
+@media (min-width: 768px) {
+  .container { padding: 20px; }
+  .matrix { grid-template-columns: 1fr 1fr; gap: 12px; }
+  .quadrant { min-height: 180px; padding: 16px; }
+  .modal-overlay { align-items: center; }
+  .modal { border-radius: 16px; padding: 24px; }
+  .calendar-day { height: 72px; }
+  .day-dot { width: 7px; height: 7px; }
+  .stats-bar { gap: 12px; }
+}
+
+/* Small mobile */
+@media (max-width: 480px) {
+  .matrix { grid-template-columns: 1fr; gap: 8px; }
+  .quadrant { min-height: 100px; }
+  .stats-bar { grid-template-columns: repeat(2, 1fr); gap: 6px; }
+  .stat { padding: 8px 6px; }
+  .stat-number { font-size: 18px; }
+  .calendar-day { height: 44px; }
+  .day-dot { width: 5px; height: 5px; }
+  .day-dots { gap: 2px; }
+}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="header-top">
+    <div>
+      <h1>AI秘書 タスク管理</h1>
+      <div class="header-date" id="headerDate"></div>
+    </div>
+  </div>
+  <div class="tab-bar">
+    <button class="tab active" onclick="switchView('matrix')">マトリクス</button>
+    <button class="tab" onclick="switchView('list')">リスト</button>
+    <button class="tab" onclick="switchView('calendar')">カレンダー</button>
+  </div>
+</div>
+
+<div class="container">
+  <div class="stats-bar" id="statsBar"></div>
+  <div class="deadline-banner" id="deadlineBanner"></div>
+
+  <!-- Matrix View -->
+  <div id="matrixView" class="matrix">
+    <div class="quadrant q1">
+      <div class="quadrant-header"><div>
+        <div class="quadrant-title">I. 緊急 × 重要</div>
+        <div class="quadrant-subtitle">危機・締切・問題対応</div>
+      </div></div>
+      <div id="q1-tasks"></div>
+    </div>
+    <div class="quadrant q2">
+      <div class="quadrant-header"><div>
+        <div class="quadrant-title">II. 重要 × 非緊急</div>
+        <div class="quadrant-subtitle">計画・自己投資・予防</div>
+      </div></div>
+      <div id="q2-tasks"></div>
+    </div>
+    <div class="quadrant q3">
+      <div class="quadrant-header"><div>
+        <div class="quadrant-title">III. 緊急 × 非重要</div>
+        <div class="quadrant-subtitle">割り込み・雑務</div>
+      </div></div>
+      <div id="q3-tasks"></div>
+    </div>
+    <div class="quadrant q4">
+      <div class="quadrant-header"><div>
+        <div class="quadrant-title">IV. 非緊急 × 非重要</div>
+        <div class="quadrant-subtitle">時間の浪費・惰性</div>
+      </div></div>
+      <div id="q4-tasks"></div>
+    </div>
+  </div>
+
+  <!-- List View -->
+  <div id="listView" style="display:none;">
+    <div class="list-view" id="listContainer"></div>
+  </div>
+
+  <!-- Calendar View -->
+  <div id="calendarView" class="calendar-section" style="display:none;">
+    <div class="calendar-header">
+      <div class="calendar-nav">
+        <button onclick="changeMonth(-1)">&larr;</button>
+        <div class="calendar-month" id="calendarMonth"></div>
+        <button onclick="changeMonth(1)">&rarr;</button>
+      </div>
+      <button class="btn btn-secondary" style="flex:none;padding:8px 14px;" onclick="goToday()">今日</button>
+    </div>
+    <div class="calendar-grid" id="calendarGrid"></div>
+  </div>
+</div>
+
+<button class="fab" onclick="openModal()">+</button>
+
+<!-- Day Detail Popup -->
+<div class="day-detail-overlay" id="dayDetailOverlay" onclick="closeDayDetail(event)">
+  <div class="day-detail" onclick="event.stopPropagation()">
+    <div class="modal-handle"></div>
+    <div class="day-detail-header">
+      <div class="day-detail-title" id="dayDetailTitle"></div>
+      <button class="day-detail-close" onclick="closeDayDetail()">&times;</button>
+    </div>
+    <div id="dayDetailList"></div>
+  </div>
+</div>
+
+<!-- Modal -->
+<div class="modal-overlay" id="modalOverlay" onclick="closeModal(event)">
+  <div class="modal" onclick="event.stopPropagation()">
+    <div class="modal-handle"></div>
+    <h2 id="modalTitle">タスクを追加</h2>
+    <div class="form-group">
+      <label>タスク名</label>
+      <input type="text" id="taskTitle" placeholder="タスクの内容を入力">
+    </div>
+    <div class="form-group">
+      <label>領域を選択</label>
+      <div class="quadrant-select">
+        <div class="q-option" data-q="1" onclick="selectQ(1)">
+          <div class="q-label" style="color:#ef4444">I</div>
+          <div class="q-desc">緊急×重要</div>
+        </div>
+        <div class="q-option" data-q="2" onclick="selectQ(2)">
+          <div class="q-label" style="color:#3b82f6">II</div>
+          <div class="q-desc">重要×非緊急</div>
+        </div>
+        <div class="q-option" data-q="3" onclick="selectQ(3)">
+          <div class="q-label" style="color:#f59e0b">III</div>
+          <div class="q-desc">緊急×非重要</div>
+        </div>
+        <div class="q-option" data-q="4" onclick="selectQ(4)">
+          <div class="q-label" style="color:#9ca3af">IV</div>
+          <div class="q-desc">非緊急×非重要</div>
+        </div>
+      </div>
+    </div>
+    <div class="form-group">
+      <label>期限</label>
+      <input type="date" id="taskDue">
+    </div>
+    <div class="form-group">
+      <label>カテゴリ</label>
+      <select id="taskCategory">
+        <option value="仕事">仕事</option>
+        <option value="プライベート">プライベート</option>
+        <option value="自己投資">自己投資</option>
+        <option value="その他">その他</option>
+      </select>
+    </div>
+    <div class="form-group">
+      <label>メモ（任意）</label>
+      <textarea id="taskNote" placeholder="補足情報があれば入力"></textarea>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-secondary" onclick="closeModal()">キャンセル</button>
+      <button class="btn btn-primary" id="modalSubmit" onclick="saveTask()">追加</button>
+    </div>
+  </div>
+</div>
+
+<script>
+let tasks = [];
+let currentView = 'matrix';
+let calendarDate = new Date();
+let editingId = null;
+let selectedQ = null;
+let lastKnownDate = null;
+
+function init() {
+  loadTasks();
+  lastKnownDate = getToday();
+  updateHeaderDate();
+  render();
+  startDateWatcher();
+}
+
+function startDateWatcher() {
+  setInterval(() => {
+    const now = getToday();
+    if (now !== lastKnownDate) {
+      lastKnownDate = now;
+      updateHeaderDate();
+      render();
+    }
+  }, 30000);
+
+  document.addEventListener('visibilitychange', () => {
+    if (!document.hidden) {
+      const now = getToday();
+      if (now !== lastKnownDate) {
+        lastKnownDate = now;
+        updateHeaderDate();
+        render();
+      }
+    }
+  });
+}
+
+function updateHeaderDate() {
+  const now = new Date();
+  document.getElementById('headerDate').textContent = now.toLocaleDateString('ja-JP', { year:'numeric', month:'long', day:'numeric', weekday:'long' });
+}
+
+function loadTasks() {
+  const saved = localStorage.getItem('ai-secretary-tasks');
+  if (saved) { tasks = JSON.parse(saved); }
+  else {
+    tasks = [
+      { id: 1, title: '提案書を田中さんに送付', quadrant: 1, due: '2026-03-11', category: '仕事', note: 'サンプル', done: false, created: '2026-03-10' },
+      { id: 2, title: '経費精算の入力', quadrant: 3, due: '2026-03-14', category: '仕事', note: 'サンプル', done: false, created: '2026-03-10' },
+      { id: 3, title: '来週のMTGアジェンダ作成', quadrant: 2, due: '2026-03-14', category: '仕事', note: 'サンプル', done: false, created: '2026-03-10' },
+    ];
+    saveTasks();
+  }
+}
+
+function saveTasks() { localStorage.setItem('ai-secretary-tasks', JSON.stringify(tasks)); }
+
+function getToday() { return new Date().toISOString().split('T')[0]; }
+function getTomorrow() { return new Date(Date.now() + 86400000).toISOString().split('T')[0]; }
+function getWeekEnd() { const d = new Date(); d.setDate(d.getDate() + 7); return d.toISOString().split('T')[0]; }
+
+function daysUntil(dateStr) {
+  const today = new Date(getToday());
+  const target = new Date(dateStr);
+  return Math.ceil((target - today) / 86400000);
+}
+
+function formatDue(dateStr) {
+  const days = daysUntil(dateStr);
+  if (days < 0) return `${Math.abs(days)}日超過`;
+  if (days === 0) return '今日';
+  if (days === 1) return '明日';
+  if (days <= 7) return `${days}日後`;
+  const d = new Date(dateStr);
+  const dow = ['日','月','火','水','木','金','土'][d.getDay()];
+  return `${d.getMonth()+1}/${d.getDate()}(${dow})`;
+}
+
+function dueBadgeClass(dateStr) {
+  if (!dateStr) return '';
+  const days = daysUntil(dateStr);
+  if (days < 0) return 'overdue';
+  if (days === 0) return 'today';
+  if (days === 1) return 'tomorrow';
+  if (days <= 7) return 'thisweek';
+  return 'later';
+}
+
+// Render
+function switchView(view) {
+  currentView = view;
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  event.target.classList.add('active');
+  document.getElementById('matrixView').style.display = view === 'matrix' ? 'grid' : 'none';
+  document.getElementById('listView').style.display = view === 'list' ? 'block' : 'none';
+  document.getElementById('calendarView').style.display = view === 'calendar' ? 'block' : 'none';
+  render();
+}
+
+function render() {
+  renderStats();
+  renderDeadlineBanner();
+  if (currentView === 'matrix') renderMatrix();
+  else if (currentView === 'list') renderList();
+  else if (currentView === 'calendar') renderCalendar();
+}
+
+function renderStats() {
+  const active = tasks.filter(t => !t.done);
+  const today = getToday();
+  const overdue = active.filter(t => t.due && t.due < today).length;
+  const dueToday = active.filter(t => t.due === today).length;
+  const q1Count = active.filter(t => t.quadrant === 1).length;
+  const q2Count = active.filter(t => t.quadrant === 2).length;
+
+  document.getElementById('statsBar').innerHTML = `
+    <div class="stat q1-stat"><div class="stat-number">${q1Count}</div><div class="stat-label">緊急×重要</div></div>
+    <div class="stat q2-stat"><div class="stat-number">${q2Count}</div><div class="stat-label">重要×非緊急</div></div>
+    <div class="stat overdue-stat"><div class="stat-number">${overdue}</div><div class="stat-label">期限超過</div></div>
+    <div class="stat today-stat"><div class="stat-number">${dueToday}</div><div class="stat-label">今日期限</div></div>
+  `;
+}
+
+function renderDeadlineBanner() {
+  const active = tasks.filter(t => !t.done && t.due);
+  const today = getToday();
+  const tomorrow = getTomorrow();
+  const weekEnd = getWeekEnd();
+
+  const overdue = active.filter(t => t.due < today).sort((a,b) => a.due.localeCompare(b.due));
+  const todayTasks = active.filter(t => t.due === today).sort((a,b) => a.quadrant - b.quadrant);
+  const tomorrowTasks = active.filter(t => t.due === tomorrow).sort((a,b) => a.quadrant - b.quadrant);
+  const weekTasks = active.filter(t => t.due > tomorrow && t.due <= weekEnd).sort((a,b) => a.due.localeCompare(b.due));
+
+  if (overdue.length === 0 && todayTasks.length === 0 && tomorrowTasks.length === 0 && weekTasks.length === 0) {
+    document.getElementById('deadlineBanner').style.display = 'none';
+    return;
+  }
+  document.getElementById('deadlineBanner').style.display = 'block';
+
+  let html = '';
+  if (overdue.length > 0) {
+    html += `<div class="deadline-section"><div class="deadline-label overdue">期限超過 ${overdue.length}件</div><div class="deadline-tasks">`;
+    overdue.forEach(t => { html += deadlineTaskHTML(t); });
+    html += '</div></div>';
+  }
+  if (todayTasks.length > 0) {
+    html += `<div class="deadline-section"><div class="deadline-label today">今日 ${todayTasks.length}件</div><div class="deadline-tasks">`;
+    todayTasks.forEach(t => { html += deadlineTaskHTML(t); });
+    html += '</div></div>';
+  }
+  if (tomorrowTasks.length > 0) {
+    html += `<div class="deadline-section"><div class="deadline-label tomorrow">明日 ${tomorrowTasks.length}件</div><div class="deadline-tasks">`;
+    tomorrowTasks.forEach(t => { html += deadlineTaskHTML(t); });
+    html += '</div></div>';
+  }
+  if (weekTasks.length > 0) {
+    html += `<div class="deadline-section"><div class="deadline-label week">今週中 ${weekTasks.length}件</div><div class="deadline-tasks">`;
+    weekTasks.forEach(t => { html += deadlineTaskHTML(t); });
+    html += '</div></div>';
+  }
+  document.getElementById('deadlineBanner').innerHTML = html;
+}
+
+function deadlineTaskHTML(t) {
+  return `<div class="deadline-task">
+    <span class="q-dot q${t.quadrant}"></span>
+    <span>${t.title}</span>
+    <span class="due-text">${formatDue(t.due)}</span>
+  </div>`;
+}
+
+function renderMatrix() {
+  [1,2,3,4].forEach(q => {
+    const container = document.getElementById(`q${q}-tasks`);
+    const qTasks = tasks.filter(t => t.quadrant === q && !t.done);
+    if (qTasks.length === 0) { container.innerHTML = '<div class="empty-state">タスクなし</div>'; return; }
+    container.innerHTML = qTasks.sort((a,b) => (a.due||'9').localeCompare(b.due||'9')).map(t => taskHTML(t)).join('');
+  });
+}
+
+function taskHTML(t) {
+  const bc = t.due ? dueBadgeClass(t.due) : '';
+  return `<div class="task-item">
+    <div class="task-check ${t.done?'done':''}" onclick="toggleTask(${t.id})"></div>
+    <div class="task-content" onclick="editTask(${t.id})" style="cursor:pointer;">
+      <div class="task-title ${t.done?'done':''}">${t.title}</div>
+      <div class="task-meta">
+        ${t.due ? `<span class="due-badge ${bc}">${formatDue(t.due)}</span>` : '<span style="color:#ccc;">期限なし</span>'}
+        ${t.category ? `<span>· ${t.category}</span>` : ''}
+      </div>
+    </div>
+    <button class="task-delete" onclick="deleteTask(${t.id})">×</button>
+  </div>`;
+}
+
+function renderList() {
+  const active = tasks.filter(t => !t.done);
+  const done = tasks.filter(t => t.done);
+  const qNames = { 1:'I. 緊急×重要', 2:'II. 重要×非緊急', 3:'III. 緊急×非重要', 4:'IV. 非緊急×非重要' };
+  let html = '';
+  [1,2,3,4].forEach(q => {
+    const qTasks = active.filter(t => t.quadrant === q).sort((a,b) => (a.due||'9').localeCompare(b.due||'9'));
+    if (qTasks.length === 0) return;
+    html += `<div class="list-section-header">${qNames[q]}（${qTasks.length}件）</div>`;
+    qTasks.forEach(t => {
+      const bc = t.due ? dueBadgeClass(t.due) : '';
+      html += `<div class="list-task">
+        <div class="list-q-badge q${t.quadrant}"></div>
+        <div class="task-check ${t.done?'done':''}" onclick="toggleTask(${t.id})"></div>
+        <div class="task-content" onclick="editTask(${t.id})" style="cursor:pointer;min-width:0;">
+          <div class="task-title">${t.title}</div>
+          <div class="task-meta">${t.due ? `<span class="due-badge ${bc}">${formatDue(t.due)}</span>` : '期限なし'} · ${t.category||''}</div>
+        </div>
+        <button class="task-delete" onclick="deleteTask(${t.id})">×</button>
+      </div>`;
+    });
+  });
+  if (done.length > 0) {
+    html += `<div class="list-section-header">完了済み（${done.length}件）</div>`;
+    done.slice(-5).reverse().forEach(t => {
+      html += `<div class="list-task" style="opacity:0.4;">
+        <div class="list-q-badge q${t.quadrant}"></div>
+        <div class="task-check done" onclick="toggleTask(${t.id})"></div>
+        <div class="task-content"><div class="task-title done">${t.title}</div></div>
+        <button class="task-delete" onclick="deleteTask(${t.id})">×</button>
+      </div>`;
+    });
+  }
+  document.getElementById('listContainer').innerHTML = html || '<div class="empty-state" style="padding:32px;">タスクがありません</div>';
+}
+
+function renderCalendar() {
+  const year = calendarDate.getFullYear();
+  const month = calendarDate.getMonth();
+  document.getElementById('calendarMonth').textContent = `${year}年${month + 1}月`;
+  const firstDay = new Date(year, month, 1);
+  const lastDay = new Date(year, month + 1, 0);
+  const startDow = firstDay.getDay();
+  const today = getToday();
+  const dows = ['日','月','火','水','木','金','土'];
+  let html = dows.map((d,i) => `<div class="calendar-dow ${i===0?'sun':''}${i===6?'sat':''}">${d}</div>`).join('');
+  const prevLast = new Date(year, month, 0).getDate();
+  for (let i = startDow - 1; i >= 0; i--) html += `<div class="calendar-day other-month"><div class="day-number">${prevLast - i}</div></div>`;
+  for (let d = 1; d <= lastDay.getDate(); d++) {
+    const dateStr = `${year}-${String(month+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+    const isToday = dateStr === today;
+    const dow = new Date(year, month, d).getDay();
+    const dayTasks = tasks.filter(t => t.due === dateStr && !t.done);
+    const dotsHtml = dayTasks.length > 0
+      ? `<div class="day-dots">${dayTasks.slice(0,5).map(t => `<div class="day-dot q${t.quadrant}"></div>`).join('')}</div>${dayTasks.length > 5 ? `<div class="day-count">+${dayTasks.length-5}</div>` : ''}`
+      : '';
+    html += `<div class="calendar-day ${isToday?'today':''}" onclick="showDayTasks('${dateStr}')">
+      <div class="day-number ${isToday?'today':''} ${dow===0?'sun':''} ${dow===6?'sat':''}">${d}</div>
+      ${dotsHtml}
+    </div>`;
+  }
+  const remaining = 7 - ((startDow + lastDay.getDate()) % 7);
+  if (remaining < 7) for (let i = 1; i <= remaining; i++) html += `<div class="calendar-day other-month"><div class="day-number">${i}</div></div>`;
+  document.getElementById('calendarGrid').innerHTML = html;
+}
+
+// Actions
+function toggleTask(id) {
+  const t = tasks.find(x => x.id === id);
+  if (t) { t.done = !t.done; t.completedDate = t.done ? getToday() : null; }
+  saveTasks(); render();
+}
+
+function deleteTask(id) {
+  if (!confirm('このタスクを削除しますか？')) return;
+  tasks = tasks.filter(t => t.id !== id);
+  saveTasks(); render();
+}
+
+function editTask(id) {
+  const t = tasks.find(x => x.id === id);
+  if (!t) return;
+  editingId = id;
+  document.getElementById('modalTitle').textContent = 'タスクを編集';
+  document.getElementById('modalSubmit').textContent = '保存';
+  document.getElementById('taskTitle').value = t.title;
+  document.getElementById('taskDue').value = t.due || '';
+  document.getElementById('taskCategory').value = t.category || '仕事';
+  document.getElementById('taskNote').value = t.note || '';
+  selectQ(t.quadrant);
+  document.getElementById('modalOverlay').classList.add('open');
+}
+
+function selectQ(q) {
+  selectedQ = q;
+  document.querySelectorAll('.q-option').forEach(el => el.classList.remove('selected'));
+  document.querySelector(`.q-option[data-q="${q}"]`).classList.add('selected');
+}
+
+function openModal() {
+  editingId = null;
+  document.getElementById('modalTitle').textContent = 'タスクを追加';
+  document.getElementById('modalSubmit').textContent = '追加';
+  document.getElementById('taskTitle').value = '';
+  document.getElementById('taskDue').value = '';
+  document.getElementById('taskCategory').value = '仕事';
+  document.getElementById('taskNote').value = '';
+  selectedQ = null;
+  document.querySelectorAll('.q-option').forEach(el => el.classList.remove('selected'));
+  document.getElementById('modalOverlay').classList.add('open');
+  setTimeout(() => document.getElementById('taskTitle').focus(), 100);
+}
+
+function closeModal(e) {
+  if (e && e.target !== e.currentTarget) return;
+  document.getElementById('modalOverlay').classList.remove('open');
+}
+
+function saveTask() {
+  const title = document.getElementById('taskTitle').value.trim();
+  if (!title) { alert('タスク名を入力してください'); return; }
+  if (!selectedQ) { alert('領域を選択してください'); return; }
+  if (editingId) {
+    const t = tasks.find(x => x.id === editingId);
+    if (t) { t.title = title; t.quadrant = selectedQ; t.due = document.getElementById('taskDue').value || null; t.category = document.getElementById('taskCategory').value; t.note = document.getElementById('taskNote').value; }
+  } else {
+    tasks.push({ id: Date.now(), title, quadrant: selectedQ, due: document.getElementById('taskDue').value || null, category: document.getElementById('taskCategory').value, note: document.getElementById('taskNote').value, done: false, created: getToday() });
+  }
+  saveTasks();
+  document.getElementById('modalOverlay').classList.remove('open');
+  render();
+}
+
+function changeMonth(delta) { calendarDate.setMonth(calendarDate.getMonth() + delta); renderCalendar(); }
+function goToday() { calendarDate = new Date(); renderCalendar(); }
+
+function showDayTasks(dateStr) {
+  const dayTasks = tasks.filter(t => t.due === dateStr && !t.done);
+  const d = new Date(dateStr + 'T00:00:00');
+  const dow = ['日','月','火','水','木','金','土'][d.getDay()];
+  document.getElementById('dayDetailTitle').textContent = `${d.getMonth()+1}月${d.getDate()}日（${dow}）`;
+  const list = document.getElementById('dayDetailList');
+  if (dayTasks.length === 0) {
+    list.innerHTML = '<div class="day-detail-empty">この日のタスクはありません</div>';
+  } else {
+    const qNames = {1:'I',2:'II',3:'III',4:'IV'};
+    list.innerHTML = dayTasks.map(t => `<div class="task-item">
+      <div class="task-check ${t.done?'done':''}" onclick="toggleTask(${t.id});showDayTasks('${dateStr}')"></div>
+      <div class="task-content" onclick="closeDayDetail();editTask(${t.id})" style="cursor:pointer;">
+        <div class="task-title">${t.title}</div>
+        <div class="task-meta"><span class="due-badge" style="background:#f0f0f0;color:#666;">領域${qNames[t.quadrant]}</span>${t.category ? ` · ${t.category}` : ''}</div>
+      </div>
+    </div>`).join('');
+  }
+  document.getElementById('dayDetailOverlay').classList.add('open');
+}
+
+function closeDayDetail(e) {
+  if (e && e.target !== e.currentTarget) return;
+  document.getElementById('dayDetailOverlay').classList.remove('open');
+}
+
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') closeModal();
+  if (e.key === 'Enter' && document.getElementById('modalOverlay').classList.contains('open') && document.activeElement.tagName !== 'TEXTAREA') saveTask();
+});
+
+init();
+</script>
+</body>
+</html>
