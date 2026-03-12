@@ -491,31 +491,79 @@ function saveSettings() {
   closeSettings();
 }
  
-function gasRequest(url, method, body) {
-  return new Promise((resolve, reject) => {
-    const xhr = new XMLHttpRequest();
-    xhr.open(method || 'GET', url);
-    xhr.setRequestHeader('Content-Type', 'text/plain');
-    xhr.onload = function() {
-      try { resolve(JSON.parse(xhr.responseText)); }
-      catch(e) { reject(new Error('レスポンス解析エラー')); }
+// JSONP方式でGETリクエスト（CORS完全回避）
+function jsonpRequest(url) {
+  return new Promise(function(resolve, reject) {
+    var callbackName = 'cb_' + Date.now() + '_' + Math.floor(Math.random() * 10000);
+    var script = document.createElement('script');
+    var timer = setTimeout(function() {
+      cleanup();
+      reject(new Error('タイムアウト（30秒）'));
+    }, 30000);
+ 
+    function cleanup() {
+      clearTimeout(timer);
+      delete window[callbackName];
+      if (script.parentNode) script.parentNode.removeChild(script);
+    }
+ 
+    window[callbackName] = function(data) {
+      cleanup();
+      resolve(data);
     };
-    xhr.onerror = function() { reject(new Error('ネットワークエラー')); };
-    xhr.ontimeout = function() { reject(new Error('タイムアウト')); };
-    xhr.timeout = 30000;
-    xhr.send(body || null);
+ 
+    script.onerror = function() {
+      cleanup();
+      reject(new Error('ネットワークエラー'));
+    };
+ 
+    var sep = url.indexOf('?') >= 0 ? '&' : '?';
+    script.src = url + sep + 'callback=' + callbackName;
+    document.head.appendChild(script);
+  });
+}
+ 
+// hidden form + iframe でPOST（CORS完全回避）
+function formPost(url, data) {
+  return new Promise(function(resolve) {
+    var iframeName = 'sf_' + Date.now();
+    var iframe = document.createElement('iframe');
+    iframe.name = iframeName;
+    iframe.style.display = 'none';
+    document.body.appendChild(iframe);
+ 
+    var form = document.createElement('form');
+    form.method = 'POST';
+    form.action = url;
+    form.target = iframeName;
+    form.style.display = 'none';
+ 
+    var input = document.createElement('textarea');
+    input.name = 'data';
+    input.value = typeof data === 'string' ? data : JSON.stringify(data);
+    form.appendChild(input);
+ 
+    document.body.appendChild(form);
+    form.submit();
+ 
+    // iframe のレスポンスは読めないので、送信完了を待つ
+    setTimeout(function() {
+      try { document.body.removeChild(iframe); } catch(e) {}
+      try { document.body.removeChild(form); } catch(e) {}
+      resolve({ sent: true });
+    }, 4000);
   });
 }
  
 function testConnection() {
-  const url = document.getElementById('syncUrl').value.trim();
+  var url = document.getElementById('syncUrl').value.trim();
   if (!url) {
     alert('URLを入力してください');
     return;
   }
   updateSyncIndicator('syncing');
-  gasRequest(url, 'GET')
-  .then(data => {
+  jsonpRequest(url)
+  .then(function(data) {
     if (data.success) {
       updateSyncIndicator('success');
       alert('接続成功！（シート内タスク: ' + (data.count || 0) + '件）');
@@ -523,12 +571,12 @@ function testConnection() {
       updateSyncIndicator('error');
       alert('接続エラー: ' + (data.error || '不明'));
     }
-    setTimeout(() => updateSyncIndicator(), 3000);
+    setTimeout(function() { updateSyncIndicator(); }, 3000);
   })
-  .catch(e => {
+  .catch(function(e) {
     updateSyncIndicator('error');
     alert('接続失敗: ' + e.message);
-    setTimeout(() => updateSyncIndicator(), 3000);
+    setTimeout(function() { updateSyncIndicator(); }, 3000);
   });
 }
  
@@ -550,20 +598,26 @@ function syncToSheet() {
   if (!syncUrl) return;
  
   updateSyncIndicator('syncing');
-  gasRequest(syncUrl, 'POST', JSON.stringify(tasks))
-  .then(data => {
+  // hidden form でPOST送信 → JSONP GETで結果を確認
+  formPost(syncUrl, tasks)
+  .then(function() {
+    // POST完了後、GETで同期結果を確認
+    return jsonpRequest(syncUrl);
+  })
+  .then(function(data) {
     if (data.success) {
       updateSyncIndicator('success');
     } else {
       updateSyncIndicator('error');
-      console.error('Sync error:', data.error);
+      console.error('Sync verify error:', data.error);
     }
-    setTimeout(() => updateSyncIndicator(), 3000);
+    setTimeout(function() { updateSyncIndicator(); }, 3000);
   })
-  .catch(e => {
+  .catch(function(e) {
+    // POSTは成功したかもしれないが確認できなかった場合
     updateSyncIndicator('error');
     console.error('Sync failed:', e);
-    setTimeout(() => updateSyncIndicator(), 5000);
+    setTimeout(function() { updateSyncIndicator(); }, 5000);
   });
 }
  
