@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="ja">
 <head>
@@ -492,6 +491,22 @@ function saveSettings() {
   closeSettings();
 }
  
+function gasRequest(url, method, body) {
+  return new Promise((resolve, reject) => {
+    const xhr = new XMLHttpRequest();
+    xhr.open(method || 'GET', url);
+    xhr.setRequestHeader('Content-Type', 'text/plain');
+    xhr.onload = function() {
+      try { resolve(JSON.parse(xhr.responseText)); }
+      catch(e) { reject(new Error('レスポンス解析エラー')); }
+    };
+    xhr.onerror = function() { reject(new Error('ネットワークエラー')); };
+    xhr.ontimeout = function() { reject(new Error('タイムアウト')); };
+    xhr.timeout = 30000;
+    xhr.send(body || null);
+  });
+}
+ 
 function testConnection() {
   const url = document.getElementById('syncUrl').value.trim();
   if (!url) {
@@ -499,8 +514,7 @@ function testConnection() {
     return;
   }
   updateSyncIndicator('syncing');
-  fetch(url, { redirect: 'follow' })
-  .then(r => r.json())
+  gasRequest(url, 'GET')
   .then(data => {
     if (data.success) {
       updateSyncIndicator('success');
@@ -536,12 +550,7 @@ function syncToSheet() {
   if (!syncUrl) return;
  
   updateSyncIndicator('syncing');
-  fetch(syncUrl, {
-    method: 'POST',
-    body: JSON.stringify(tasks),
-    redirect: 'follow'
-  })
-  .then(r => r.json())
+  gasRequest(syncUrl, 'POST', JSON.stringify(tasks))
   .then(data => {
     if (data.success) {
       updateSyncIndicator('success');
@@ -937,4 +946,3 @@ init();
 </body>
 </html>
  
-Task app cloud sync and progress tracking - Claude
