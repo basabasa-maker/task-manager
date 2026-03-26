@@ -422,6 +422,7 @@ function init() {
   updateHeaderDate();
   render();
   startDateWatcher();
+  pullFromSheet();
 }
  
 function startDateWatcher() {
@@ -442,6 +443,7 @@ function startDateWatcher() {
         updateHeaderDate();
         render();
       }
+      pullFromSheet();
     }
   });
 }
@@ -596,6 +598,40 @@ function updateSyncIndicator(status) {
   }
 }
  
+function pullFromSheet() {
+  if (!syncUrl) return;
+  updateSyncIndicator('syncing');
+  jsonpRequest(syncUrl)
+  .then(function(res) {
+    if (!res || !res.success || !res.data) { updateSyncIndicator(); return; }
+    var remote = res.data;
+    if (!Array.isArray(remote) || remote.length === 0) { updateSyncIndicator('success'); setTimeout(function(){ updateSyncIndicator(); }, 2000); return; }
+    // Build local ID map
+    var localMap = {};
+    tasks.forEach(function(t) { localMap[t.id] = t; });
+    var merged = false;
+    remote.forEach(function(rt) {
+      if (!rt.id) return;
+      if (!localMap[rt.id]) {
+        // Remote-only task: add it
+        if (rt.progress === undefined) rt.progress = 0;
+        tasks.push(rt);
+        merged = true;
+      }
+    });
+    if (merged) {
+      localStorage.setItem('ai-secretary-tasks', JSON.stringify(tasks));
+      render();
+    }
+    updateSyncIndicator('success');
+    setTimeout(function(){ updateSyncIndicator(); }, 2000);
+  })
+  .catch(function() {
+    updateSyncIndicator('error');
+    setTimeout(function(){ updateSyncIndicator(); }, 3000);
+  });
+}
+
 function syncToSheet() {
   if (!syncUrl) return;
  

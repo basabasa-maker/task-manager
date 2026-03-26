@@ -16,22 +16,28 @@ const HEADERS = ["id", "title", "quadrant", "due", "category", "note", "done", "
 function doGet(e) {
   try {
     const tasks = getTasks();
-    return ContentService
-      .createTextOutput(JSON.stringify({
-        success: true,
-        data: tasks,
-        count: tasks.length,
-        timestamp: new Date().toISOString()
-      }))
-      .setMimeType(ContentService.MimeType.JSON);
+    const callback = e.parameter.callback;
+    const result = JSON.stringify({
+      success: true,
+      data: tasks,
+      count: tasks.length,
+      timestamp: new Date().toISOString()
+    });
+    if (callback) {
+      return ContentService.createTextOutput(callback + "(" + result + ")").setMimeType(ContentService.MimeType.JAVASCRIPT);
+    }
+    return ContentService.createTextOutput(result).setMimeType(ContentService.MimeType.JSON);
   } catch (error) {
-    return ContentService
-      .createTextOutput(JSON.stringify({
-        success: false,
-        error: error.message,
-        timestamp: new Date().toISOString()
-      }))
-      .setMimeType(ContentService.MimeType.JSON);
+    const callback = (e.parameter || {}).callback;
+    const result = JSON.stringify({
+      success: false,
+      error: error.message,
+      timestamp: new Date().toISOString()
+    });
+    if (callback) {
+      return ContentService.createTextOutput(callback + "(" + result + ")").setMimeType(ContentService.MimeType.JAVASCRIPT);
+    }
+    return ContentService.createTextOutput(result).setMimeType(ContentService.MimeType.JSON);
   }
 }
  
