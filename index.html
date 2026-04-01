@@ -465,10 +465,45 @@ function loadTasks() {
     });
   }
   else {
+    // Google Sheetsから復元したデータ（2026-04-01時点）
     tasks = [
-      { id: 1, title: '提案書を田中さんに送付', quadrant: 1, due: '2026-03-11', category: '仕事', note: 'サンプル', done: false, created: '2026-03-10', progress: 0 },
-      { id: 2, title: '経費精算の入力', quadrant: 3, due: '2026-03-14', category: '仕事', note: 'サンプル', done: false, created: '2026-03-10', progress: 0 },
-      { id: 3, title: '来週のMTGアジェンダ作成', quadrant: 2, due: '2026-03-14', category: '仕事', note: 'サンプル', done: false, created: '2026-03-10', progress: 0 },
+      {id:1773246361067,title:"インスタ投稿_投稿_りょうけん",quadrant:2,due:"",category:"仕事",note:"",done:false,created:"2026-03-11",completedDate:"",progress:35},
+      {id:1773246402640,title:"インスタ案件_投稿_鮓割烹むらやま",quadrant:1,due:"",category:"仕事",note:"",done:true,created:"2026-03-11",completedDate:"2026-03-19",progress:100},
+      {id:1773246437092,title:"食べログ案件_投稿_神戸びいどろ",quadrant:2,due:"",category:"仕事",note:"",done:true,created:"2026-03-11",completedDate:"2026-03-14",progress:100},
+      {id:1773246479841,title:"CIC取得",quadrant:3,due:"",category:"プライベート",note:"",done:false,created:"2026-03-11",completedDate:"",progress:0},
+      {id:1773246513392,title:"食べログ案件_投稿_和合藝術",quadrant:2,due:"2026-03-18",category:"仕事",note:"",done:true,created:"2026-03-11",completedDate:"2026-03-16",progress:100},
+      {id:1773246548643,title:"インスタ投稿_投稿_ふぐ中俣",quadrant:2,due:"",category:"仕事",note:"",done:false,created:"2026-03-11",completedDate:"",progress:50},
+      {id:1773246566317,title:"確定申告",quadrant:1,due:"2026-03-16",category:"仕事",note:"",done:true,created:"2026-03-11",completedDate:"2026-03-16",progress:100},
+      {id:1773246581473,title:"消費税納税",quadrant:2,due:"2026-03-19",category:"仕事",note:"",done:true,created:"2026-03-11",completedDate:"2026-03-19",progress:100},
+      {id:1773246657004,title:"小規模企業共済借入れ",quadrant:1,due:"2026-03-16",category:"仕事",note:"・必要書類確認\n・予約確認",done:true,created:"2026-03-11",completedDate:"2026-03-18",progress:100},
+      {id:1773247211311,title:"コンセプトワーク作成・提出",quadrant:1,due:"2026-03-17",category:"仕事",note:"",done:true,created:"2026-03-11",completedDate:"2026-03-15",progress:100},
+      {id:1773271238435,title:"白田の叔父さんにTEL",quadrant:1,due:"2026-03-12",category:"仕事",note:"",done:true,created:"2026-03-11",completedDate:"2026-03-19",progress:100},
+      {id:1773275836868,title:"Even G2 現物確認",quadrant:4,due:"",category:"プライベート",note:"Even Realities 【EVEN G2】JUN GINZA",done:false,created:"2026-03-12",completedDate:"",progress:0},
+      {id:1773296623579,title:"テスト",quadrant:4,due:"",category:"その他",note:"",done:true,created:"2026-03-12",completedDate:"2026-03-12",progress:100},
+      {id:1773439260104,title:"報酬を送金",quadrant:1,due:"2026-03-14",category:"仕事",note:"",done:true,created:"2026-03-13",completedDate:"2026-03-15",progress:100},
+      {id:1773590376955,title:"びいどろ請求書送付",quadrant:2,due:"",category:"仕事",note:"",done:true,created:"2026-03-16",completedDate:"2026-03-16",progress:100},
+      {id:1773764662567,title:"案件調整_ジンギスカン",quadrant:2,due:"2026-03-18",category:"仕事",note:"",done:true,created:"2026-03-18",completedDate:"2026-03-18",progress:100},
+      {id:1773764685005,title:"案件調整_焼肉",quadrant:2,due:"2026-03-18",category:"仕事",note:"",done:true,created:"2026-03-18",completedDate:"2026-03-18",progress:100},
+      {id:1773764722501,title:"食べログ投稿_割烹かねこ",quadrant:2,due:"2026-03-23",category:"仕事",note:"",done:true,created:"2026-03-18",completedDate:"2026-03-23",progress:100},
+      {id:1773764752124,title:"食べログ投稿_meso",quadrant:2,due:"2026-03-22",category:"仕事",note:"",done:true,created:"2026-03-18",completedDate:"2026-03-18",progress:100},
+      {id:1773792913371,title:"Lr契約検討",quadrant:4,due:"",category:"仕事",note:"",done:true,created:"2026-03-18",completedDate:"2026-03-19",progress:100},
+      {id:1773794873592,title:"仙台店舗に入店前にTagzに連絡",quadrant:2,due:"2026-03-20",category:"仕事",note:"入店前に連絡すること！",done:true,created:"2026-03-18",completedDate:"2026-03-20",progress:100},
+      {id:1773802832729,title:"サキヨミ課題提出",quadrant:1,due:"2026-03-18",category:"仕事",note:"",done:true,created:"2026-03-18",completedDate:"2026-03-18",progress:100},
+      {id:1773845798233,title:"サキヨミ課題_競合分析",quadrant:2,due:"2026-03-19",category:"仕事",note:"",done:true,created:"2026-03-18",completedDate:"2026-03-20",progress:100},
+      {id:1773935943527,title:"サキヨミ_プロフ作成／アカウント開設",quadrant:1,due:"2026-03-29",category:"仕事",note:"",done:false,created:"2026-03-20",completedDate:"",progress:0},
+      {id:1773935973727,title:"NotebookLM  漫画作成手順学ぶ",quadrant:2,due:"",category:"仕事",note:"",done:false,created:"2026-03-20",completedDate:"",progress:50},
+      {id:1773938657130,title:"妙子に土産代支払い",quadrant:2,due:"",category:"仕事",note:"",done:true,created:"2026-03-20",completedDate:"2026-03-20",progress:100},
+      {id:1773965267255,title:"消費税調べる",quadrant:2,due:"",category:"仕事",note:"",done:false,created:"2026-03-20",completedDate:"",progress:0},
+      {id:1773965298700,title:"納税証明書を所定の位置に片づける",quadrant:2,due:"",category:"仕事",note:"",done:false,created:"2026-03-20",completedDate:"",progress:0},
+      {id:1774006011088,title:"杉山さんに連絡",quadrant:1,due:"",category:"プライベート",note:"",done:true,created:"2026-03-20",completedDate:"2026-03-21",progress:100},
+      {id:1774103263189,title:"焼肉案件調整",quadrant:2,due:"2026-03-22",category:"仕事",note:"",done:true,created:"2026-03-21",completedDate:"2026-03-24",progress:100},
+      {id:1774131971426,title:"請求書送付",quadrant:2,due:"2026-03-22",category:"仕事",note:"",done:true,created:"2026-03-22",completedDate:"2026-03-23",progress:100},
+      {id:1774191128165,title:"社保支払い",quadrant:2,due:"",category:"仕事",note:"",done:false,created:"2026-03-22",completedDate:"",progress:0},
+      {id:1774324541598,title:"スクショツールの購入又は制作",quadrant:2,due:"",category:"仕事",note:"",done:false,created:"2026-03-24",completedDate:"",progress:0},
+      {id:1774336264809,title:"ショート動画作成方法について確認",quadrant:2,due:"",category:"仕事",note:"",done:false,created:"2026-03-24",completedDate:"",progress:0},
+      {id:1774344945697,title:"生活ログアプリ作成",quadrant:2,due:"",category:"仕事",note:"",done:false,created:"2026-03-24",completedDate:"",progress:0},
+      {id:1774360223482,title:"居酒屋にご投稿済み報告",quadrant:2,due:"2026-03-25",category:"仕事",note:"",done:true,created:"2026-03-24",completedDate:"2026-03-25",progress:100},
+      {id:1774415987190,title:"インスタ投稿_和合藝術",quadrant:1,due:"2026-03-31",category:"仕事",note:"",done:false,created:"2026-03-25",completedDate:"",progress:0}
     ];
     saveTasks();
   }
