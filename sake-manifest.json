@@ -1,0 +1,16 @@
+{
+  "name": "日本酒テイスティングログ",
+  "short_name": "日本酒ログ",
+  "start_url": "sake.html",
+  "display": "standalone",
+  "background_color": "#1a1a2e",
+  "theme_color": "#16213e",
+  "icons": [
+    {
+      "src": "sake-icon-180.png",
+      "sizes": "180x180",
+      "type": "image/png",
+      "purpose": "any"
+    }
+  ]
+}
