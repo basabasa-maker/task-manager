@@ -12,100 +12,139 @@
 <link rel="apple-touch-icon" sizes="180x180" href="sake-icon-180.png">
 <link rel="manifest" href="sake-manifest.json">
 <style>
-* { margin: 0; padding: 0; }
-html, body { height: 100%; width: 100%; overflow: hidden; background: #1a1a2e; }
-iframe {
-  width: 100%;
-  height: 100%;
-  border: none;
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-}
-.loading {
-  position: fixed;
-  top: 0; left: 0; right: 0; bottom: 0;
+* { margin: 0; padding: 0; box-sizing: border-box; }
+html, body { height: 100%; background: #1a1a2e; }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Hiragino Sans", sans-serif;
   display: flex;
   align-items: center;
   justify-content: center;
-  flex-direction: column;
-  gap: 16px;
-  background: #1a1a2e;
-  z-index: 10;
-  transition: opacity 0.3s;
+  padding: 24px;
 }
-.loading.hidden { opacity: 0; pointer-events: none; }
-.loading p { color: #e2b04a; font-family: -apple-system, sans-serif; font-size: 16px; }
-.loading .spinner {
+.container {
+  text-align: center;
+  max-width: 340px;
+}
+.icon-preview {
+  width: 80px;
+  height: 80px;
+  border-radius: 18px;
+  margin: 0 auto 24px;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.3);
+}
+h1 {
+  color: #e2b04a;
+  font-size: 1.3rem;
+  margin-bottom: 8px;
+  font-weight: 600;
+}
+.subtitle {
+  color: #a0b4cc;
+  font-size: 0.9rem;
+  margin-bottom: 32px;
+}
+.launch-btn {
+  display: block;
+  width: 100%;
+  padding: 14px 24px;
+  background: linear-gradient(135deg, #e2b04a, #d4a03c);
+  color: #16213e;
+  text-decoration: none;
+  border-radius: 12px;
+  font-weight: 700;
+  font-size: 1.05rem;
+  margin-bottom: 24px;
+  box-shadow: 0 4px 12px rgba(226,176,74,0.3);
+}
+.launch-btn:active {
+  transform: scale(0.97);
+}
+.howto {
+  background: rgba(22,33,62,0.8);
+  border: 1px solid #1a3a5c;
+  border-radius: 12px;
+  padding: 16px;
+  text-align: left;
+}
+.howto-title {
+  color: #e2b04a;
+  font-size: 0.85rem;
+  font-weight: 600;
+  margin-bottom: 12px;
+  text-align: center;
+}
+.howto ol {
+  color: #a0b4cc;
+  font-size: 0.82rem;
+  line-height: 1.8;
+  padding-left: 20px;
+}
+.howto li { margin-bottom: 4px; }
+.howto .highlight { color: #e2b04a; font-weight: 600; }
+
+/* リダイレクト中の表示 */
+.redirecting {
+  display: none;
+  text-align: center;
+}
+.redirecting p {
+  color: #e2b04a;
+  font-size: 1rem;
+  margin-bottom: 16px;
+}
+.spinner {
   width: 40px; height: 40px;
   border: 3px solid rgba(226,176,74,0.3);
   border-top-color: #e2b04a;
   border-radius: 50%;
   animation: spin 0.8s linear infinite;
+  margin: 0 auto 16px;
 }
 @keyframes spin { to { transform: rotate(360deg); } }
-.error-box {
-  display: none;
-  position: fixed;
-  top: 0; left: 0; right: 0; bottom: 0;
-  background: #1a1a2e;
-  align-items: center;
-  justify-content: center;
-  flex-direction: column;
-  gap: 20px;
-  padding: 24px;
-  text-align: center;
-  z-index: 20;
-}
-.error-box.show { display: flex; }
-.error-box p { color: #a0b4cc; font-family: -apple-system, sans-serif; font-size: 15px; line-height: 1.6; }
-.error-box a {
-  display: inline-block;
-  padding: 12px 32px;
-  background: #e2b04a;
-  color: #16213e;
-  text-decoration: none;
-  border-radius: 8px;
-  font-weight: 600;
-  font-family: -apple-system, sans-serif;
-  font-size: 16px;
-}
 </style>
 </head>
 <body>
-<div class="loading" id="loading">
+
+<div class="container" id="mainContent">
+  <img class="icon-preview" src="sake-icon-180.png" alt="日本酒ログ">
+  <h1>日本酒テイスティングログ</h1>
+  <p class="subtitle">SSI唎酒師テイスティング練習用</p>
+
+  <a class="launch-btn" id="launchBtn" href="https://script.google.com/macros/s/AKfycbyIQoZO94pGIYZiEy_2X73pT-v5MbjwWWi9CJ9jmpIsVOap7ew7btoHdSIKTvCEepdA/exec">
+    アプリを起動
+  </a>
+
+  <div class="howto">
+    <div class="howto-title">ホーム画面にアイコンを追加する方法</div>
+    <ol>
+      <li>下のSafariメニュー <span class="highlight">共有ボタン（↑）</span>をタップ</li>
+      <li><span class="highlight">「ホーム画面に追加」</span>をタップ</li>
+      <li>「追加」をタップして完了</li>
+    </ol>
+  </div>
+</div>
+
+<div class="container redirecting" id="redirecting">
   <div class="spinner"></div>
-  <p>読み込み中...</p>
+  <p>アプリを起動中...</p>
 </div>
-<div class="error-box" id="errorBox">
-  <p>アプリの読み込みに失敗しました。<br>下のボタンから直接開いてください。</p>
-  <a href="https://script.google.com/macros/s/AKfycbyIQoZO94pGIYZiEy_2X73pT-v5MbjwWWi9CJ9jmpIsVOap7ew7btoHdSIKTvCEepdA/exec">アプリを開く</a>
-</div>
-<iframe
-  id="app"
-  src="https://script.google.com/macros/s/AKfycbyIQoZO94pGIYZiEy_2X73pT-v5MbjwWWi9CJ9jmpIsVOap7ew7btoHdSIKTvCEepdA/exec"
-  allow="camera"
-  sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-popups-to-escape-sandbox"
-  loading="eager"
-></iframe>
+
 <script>
-var iframe = document.getElementById('app');
-var loading = document.getElementById('loading');
-var errorBox = document.getElementById('errorBox');
+(function() {
+  var GAS_URL = 'https://script.google.com/macros/s/AKfycbyIQoZO94pGIYZiEy_2X73pT-v5MbjwWWi9CJ9jmpIsVOap7ew7btoHdSIKTvCEepdA/exec';
 
-iframe.addEventListener('load', function() {
-  loading.classList.add('hidden');
-});
+  // ホーム画面から起動された場合は自動リダイレクト
+  var isStandalone = window.navigator.standalone ||
+    window.matchMedia('(display-mode: standalone)').matches;
 
-// 10秒でタイムアウト → フォールバック表示
-setTimeout(function() {
-  if (!loading.classList.contains('hidden')) {
-    loading.style.display = 'none';
-    errorBox.classList.add('show');
+  if (isStandalone) {
+    document.getElementById('mainContent').style.display = 'none';
+    document.getElementById('redirecting').style.display = 'block';
+    setTimeout(function() {
+      window.location.href = GAS_URL;
+    }, 500);
   }
-}, 10000);
+})();
 </script>
 </body>
 </html>
